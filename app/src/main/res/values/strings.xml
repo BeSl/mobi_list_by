@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Список покупок</string>
+    <string name="add_item">Добавить покупку</string>
+    <string name="item_name_hint">Название</string>
+    <string name="priority">Приоритет</string>
+    <string name="low_priority">Низкий</string>
+    <string name="normal_priority">Средний</string>
+    <string name="high_priority">Высокий</string>
+    <string name="add">Добавить</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+    <string name="shopping_list">Список покупок</string>
+    <string name="all">Все</string>
+    <string name="active">Активные</string>
+    <string name="completed">Завершенные</string>
+    <string name="empty_list">Список покупок пуст</string>
+    <string name="add_first_item">Нажмите + для добавления первой покупки</string>
+</resources>
