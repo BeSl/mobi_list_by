@@ -1,31 +1,35 @@
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.myapplication.Priority
 import com.example.myapplication.ShoppingItem
-import com.example.myapplication.ui.theme.StatusPurchased
-import com.example.myapplication.ui.theme.StatusActive
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -33,59 +37,55 @@ import java.util.Locale
 fun ShoppingListItem(
     item: ShoppingItem,
     onCheckedChange: (Boolean) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onPriorityChange: (Priority) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .background(MaterialTheme.colorScheme.surface),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Checkbox(
-                checked = item.isPurchased,
-                onCheckedChange = { onCheckedChange(it) }
-            )
-            
-            Column(
-                modifier = Modifier.padding(start = 8.dp)
-            ) {
-                Text(
-                    text = if (item.quantity > 1) "${item.name} (${item.quantity})" else item.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textDecoration = if (item.isPurchased) TextDecoration.LineThrough else null,
-                    color = if (item.isPurchased) MaterialTheme.colorScheme.onSurfaceVariant
-                           else MaterialTheme.colorScheme.onSurface
-                )
-                
-                // Date information
-                Text(
-                    text = "Добавлено: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(item.createdDate)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                if (item.completedDate != null) {
-                    Text(
-                        text = "Куплено: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(item.completedDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+        PriorityIndicator(
+            priority = item.priority,
+            onClick = { newPriority ->
+                onPriorityChange(newPriority)
             }
-            
-            // Priority indicator
-            PriorityIndicator(priority = item.priority)
-            
-            // Status indicator
-            StatusIndicator(isPurchased = item.isPurchased)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Checkbox(
+            checked = item.isChecked,
+            onCheckedChange = onCheckedChange
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp)
+        ) {
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                textDecoration = if (item.isChecked) TextDecoration.LineThrough else null,
+                color = if (item.isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+            )
+
+            val formattedDate = remember(item.createdDate) {
+                SimpleDateFormat("dd.MM HH:mm", Locale.getDefault()).format(item.createdDate)
+            }
+            Text(
+                text = "Добавлено: $formattedDate",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        
+
+        if (item.quantity > 1) {
+            QuantityBadge(quantity = item.quantity)
+        }
+
         IconButton(onClick = onDelete) {
             Icon(
                 imageVector = Icons.Default.Delete,
@@ -97,35 +97,48 @@ fun ShoppingListItem(
 }
 
 @Composable
-fun PriorityIndicator(priority: Priority) {
+fun PriorityIndicator(
+    priority: Priority,
+    onClick: ((Priority) -> Unit)? = null
+) {
     val color = when (priority) {
-        Priority.LOW -> MaterialTheme.colorScheme.primary
-        Priority.NORMAL -> MaterialTheme.colorScheme.secondary
-        Priority.HIGH -> MaterialTheme.colorScheme.error
+        Priority.LOW -> Color(0xFF4CAF50).copy(alpha = 0.7f)
+        Priority.NORMAL -> Color(0xFFFFC107).copy(alpha = 0.7f)
+        Priority.HIGH -> Color(0xFFF44336).copy(alpha = 0.7f)
     }
-    
-    androidx.compose.foundation.layout.Box(
-       modifier = androidx.compose.ui.Modifier
-           .padding(start = 8.dp)
-           .background(color, androidx.compose.foundation.shape.CircleShape)
-           .size(12.dp)
-   )
+
+    var modifier = Modifier
+        .size(24.dp)
+        .clip(CircleShape)
+        .background(color)
+
+    if (onClick != null) {
+        val nextPriority = when (priority) {
+            Priority.LOW -> Priority.NORMAL
+            Priority.NORMAL -> Priority.HIGH
+            Priority.HIGH -> Priority.LOW
+        }
+        modifier = modifier.clickable { onClick(nextPriority) }
+    }
+
+    Box(modifier = modifier)
 }
 
 @Composable
-fun StatusIndicator(isPurchased: Boolean) {
-    val color = if (isPurchased) {
-        // Зеленый цвет для купленных товаров
-        StatusPurchased
-    } else {
-        // Серый цвет для активных товаров
-        StatusActive
+fun QuantityBadge(quantity: Int) {
+    Box(
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .size(28.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "x$quantity",
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp
+        )
     }
-    
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier
-            .padding(start = 8.dp)
-            .background(color, androidx.compose.foundation.shape.CircleShape)
-            .size(12.dp)
-    )
 }
